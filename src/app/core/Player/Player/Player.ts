@@ -1,31 +1,49 @@
+import { MoveType } from '../../EngineInfo/interfaces';
 import { EventType, IEventListener } from '../../Event';
-import { EventKey } from '../../Event/interfaces/EventKey';
-import { IControl } from '../../shared/interfaces';
-import { IPlayer } from '../interfaces';
+import { GameObject } from '../../GameObject';
+import { ICanKilled, IControl, IKiller, IPolygonInfo, IPosition, IProjectile } from '../../shared/interfaces';
+import { ISpriteInfo } from '../../SpriteInfo/interfaces';
 
-export class Player implements IPlayer {
+export class Player extends GameObject implements ICanKilled {
 	private _eventListeners: IEventListener[] = [];
 
-	private _controls: IControl[] = [
-		{ key: EventKey.Up, handler: this.goUp },
-		{ key: EventKey.Right, handler: this.goRight },
-		{ key: EventKey.Down, handler: this.goDown },
-		{ key: EventKey.Left, handler: this.goLeft },
-	];
+	killers: IKiller[] = [];
+	isShooting: boolean = false;
 
-	constructor() {
-		this._initPlayerControl();
+	private _controls: IControl[] = [];
+
+	constructor(spriteInfo: ISpriteInfo, polygonInfo: IPolygonInfo) {
+		super(spriteInfo, polygonInfo);
 	}
 
-	goUp() { };
-	goRight() { };
-	goDown() { };
-	goLeft() { };
+	registerKiller(killer: IKiller) {
+		this.killers.push(killer);
+	}
 
-	destroy() {
-		this._eventListeners.forEach((listener) => {
-			document.removeEventListener(listener.eventType, listener.eventListener);
-		})
+	die() {
+		this.state.isDie = true;
+		this.speed.dx = 0;
+		this.speed.dy = 0;
+
+		this.destroy();
+		this.dieEmit(this);
+	}
+
+	async init(startPosition: IPosition, dieEmit: Function, shootEmit: (projectile: IProjectile, startPosition: IPosition) => Promise<void>) {
+		this._initPlayerControl();
+		await super.init(startPosition, dieEmit, shootEmit);
+	}
+
+	draw(ctx: CanvasRenderingContext2D, frame: number) {
+		if (this.isShooting) {
+			this.state.moveType = MoveType.Shoot;
+		} else if (this.state.isDie) {
+			this.state.moveType = MoveType.Die;
+		} else {
+			this.state.moveType = this.state.speed.dx !== 0 || this.state.speed.dy !== 0 ?
+			MoveType.Run : MoveType.Stand;
+		}
+		super.draw(ctx, frame);
 	}
 
 	private _initPlayerControl() {
@@ -35,15 +53,30 @@ export class Player implements IPlayer {
 	}
 
 	private _registerControlListener(control: IControl) {
-		document.addEventListener(EventType.Keydown, (e) => {
-			if (e.key === control.key) {
+		const handler = (e: KeyboardEvent) => {
+			if (e.key === control.keyboardKey) {
 				control.handler();
 			}
-		})
+		};
+
+		document.addEventListener(EventType.Keydown, handler)
 
 		this._eventListeners.push({
 			eventType: EventType.Keydown,
-			eventListener: control.handler,
+			eventListener: handler,
 		})
 	}
+
+	registerControls(controls: IControl[]) {
+		controls.forEach((c) => {
+			this._registerControlListener(c);
+		})
+	}
+
+	destroy() {
+		this._eventListeners.forEach((listener) => {
+			document.removeEventListener(listener.eventType, listener.eventListener);
+		})
+	}
+
 }

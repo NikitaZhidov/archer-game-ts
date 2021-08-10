@@ -1,6 +1,6 @@
 import { EventKey } from '../../Event';
 
 export interface IControl {
-	key: EventKey,
+	keyboardKey: EventKey,
 	handler: () => void;
 }

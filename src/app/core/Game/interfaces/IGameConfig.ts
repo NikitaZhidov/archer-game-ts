@@ -1,8 +1,13 @@
-import { IMap } from '../../../Map/interfaces';
-import { IGameObserver } from '../../../shared/interfaces';
+import { IEnemyCreator } from '../../EnemyCreator';
+import { IMap } from '../../Map/interfaces';
+import { Player } from '../../Player/Player';
+import { IBonusCreator } from '../../shared/interfaces';
 
 export interface IGameConfig {
-	widthInBlocks: number;
-	heightInBlocks: number;
-	map: IMap & IGameObserver,
+	widthInBlockAreas: number;
+	heightInBlockAreas: number;
+	map: IMap;
+	player: Player;
+	enemyCreator: IEnemyCreator;
+	bonusCreator: IBonusCreator;
 }

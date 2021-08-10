@@ -3,4 +3,5 @@ export enum EventKey {
 	Left = "ArrowLeft",
 	Up = "ArrowUp",
 	Down = "ArrowDown",
+	Space = " ",
 }
